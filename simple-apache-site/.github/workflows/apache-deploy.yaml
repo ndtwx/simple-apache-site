@@ -1,0 +1,42 @@
+name: Deploy Apache Web Server
+
+on:
+  push:
+    branches:
+      - main
+    # Uncomment below to restrict deployment to changes in the 'public' directory only
+    # paths:
+    #   - 'public/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        # Use a pinned version for security and stability
+        uses: actions/checkout@v3
+
+      - name: Install Apache
+        # Install the Apache web server
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apache2
+
+      - name: Clean Apache root
+        # Remove old files before copying new ones to prevent stale content
+        run: sudo rm -rf /var/www/html/*
+
+      - name: Copy site files to Apache root
+        # Copy only the necessary site files (assumes your site files are in 'public')
+        run: |
+          sudo cp -r public/* /var/www/html/
+          sudo chown -R www-data:www-data /var/www/html/
+
+      - name: Reload Apache
+        # Reload Apache to apply changes with minimal disruption
+        run: sudo systemctl reload apache2
+
+      - name: Verify Apache is serving the site
+        # Check that the site is up and serving HTTP 200 OK
+        run: curl -I http://localhost | grep "200 OK"
